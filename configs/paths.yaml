@@ -1,0 +1,5 @@
+assets_dir: tests/assets_min
+inputs_dir: tests/assets_min/timelines
+logs_dir: tests/out/logs
+out_root: tests/out
+videos_dir: tests/out/videos
