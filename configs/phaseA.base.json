@@ -1,0 +1,24 @@
+{
+  "io": {
+    "assets_dir": "tests/assets_min",
+    "out_dir": "tests/out",
+    "exp_name": "exp_phaseA_yaw"
+  },
+  "video": {
+    "width": 640,
+    "height": 640,
+    "fps": 25,
+    "duration_s": 3
+  },
+  "render": {
+    "crossfade_frames": 4
+  },
+  "inputs": {
+    "mouth_timeline": "timelines/mouth_timeline.json",
+    "pose_timeline": "timelines/pose_timeline_yaw.flat.json",
+    "expression_timeline": "timelines/expression_timeline.json"
+  },
+  "atlas": {
+    "atlas_json": "atlas.min.json"
+  }
+}
