@@ -2,7 +2,7 @@ name: Mirror external videos as artifacts
 
 on:
   pull_request:
-    types: [opened, synchronize, reopened]
+    types: [opened, reopened]
 
 jobs:
   mirror:
