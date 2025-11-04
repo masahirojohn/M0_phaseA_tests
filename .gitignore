@@ -1,0 +1,16 @@
+# videos & heavy outputs
+*.mp4
+*.mov
+*.avi
+*.mkv
+*.gif
+/out/
+/outputs/
+/artifacts/
+
+# temp & caches
+*.tmp
+*.log
+*.cache/
+__pycache__/
+.ipynb_checkpoints/
