@@ -1,0 +1,40 @@
+name: Mirror external videos as artifacts
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  mirror:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Extract video URLs from PR body
+        id: extract
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const body = context.payload.pull_request.body || "";
+            const urls = [...body.matchAll(/\((https?:\/\/[^\s)]+\.mp4[^\)]*)\)/g)].map(m => m[1]);
+            core.setOutput('urls', JSON.stringify(urls));
+
+      - name: Download videos
+        if: ${{ steps.extract.outputs.urls != '[]' }}
+        run: |
+          mkdir -p artifacts
+          python - << 'PY'
+import json, os, urllib.request
+urls = json.loads('${{ steps.extract.outputs.urls }}')
+for i, u in enumerate(urls, 1):
+    fn = f"video_{i}.mp4"
+    print("downloading", u, "->", fn)
+    urllib.request.urlretrieve(u, os.path.join("artifacts", fn))
+PY
+
+      - name: Upload as artifact (3 days retention)
+        if: ${{ steps.extract.outputs.urls != '[]' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: videos
+          path: artifacts/
+          retention-days: 3
