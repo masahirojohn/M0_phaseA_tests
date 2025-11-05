@@ -106,6 +106,8 @@ def main():
 
     # assets_dir を絶対パス化
     final_cfg["io"]["assets_dir"] = str(repo / final_cfg["io"]["assets_dir"])
+    if "atlas" in final_cfg and "atlas_json" in final_cfg["atlas"]:
+        final_cfg["atlas"]["atlas_json"] = str(Path(final_cfg["io"]["assets_dir"]) / final_cfg["atlas"]["atlas_json"])
 
     # 不要なタイムライン設定を削除
     if "mouth_timeline" in final_cfg["inputs"]:
