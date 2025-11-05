@@ -14,10 +14,15 @@ def _ensure_dir(p: str):
 def load_atlas_index(atlas_json_path: str) -> Dict[str, Any]:
     with open(atlas_json_path, "r", encoding="utf-8") as f:
         idx = json.load(f)
+
+    # "views" キーは使わず、"front" 等のビューがトップレベルにあると期待
+    # また、mouth キーを小文字化
     views = {}
-    for view, mapping in idx["views"].items():
-        views[view] = {k.lower(): v for k, v in mapping.items()}
-    idx["views"] = views
+    for key, value in idx.items():
+        if isinstance(value, dict) and "closed" in value:  # Assuming this identifies a view entry
+            views[key] = {k.lower(): v for k, v in value.items()}
+    idx["views"] = views  # Add a "views" key for compatibility with the rest of the code
+
     return idx
 
 def _normalize_mouth(mouth: str) -> str:

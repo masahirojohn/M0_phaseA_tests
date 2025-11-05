@@ -1,0 +1,22 @@
+{
+  "io": {
+    "assets_dir": "/app/tests/assets_min",
+    "out_dir": "/app/tests/out",
+    "exp_name": "exp_phaseA_yaw"
+  },
+  "video": {
+    "width": 640,
+    "height": 640,
+    "fps": 25,
+    "duration_s": 29.96
+  },
+  "render": {
+    "crossfade_frames": 4
+  },
+  "inputs": {
+    "pose_timeline": "/app/tests/flats/yaw.flat.json"
+  },
+  "atlas": {
+    "atlas_json": "/app/tests/assets_min/atlas.min.json"
+  }
+}
