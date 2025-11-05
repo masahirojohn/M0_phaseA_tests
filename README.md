@@ -1,33 +1,15 @@
-# M0_phaseA_tests – Strict Template (B' mode)
+# M0_phaseA_tests – Pose-only Harness (Jules: MP4生成, PRはリンクのみ)
 
-This repository is a clean, **PhaseA pose-only** test harness for M0, designed to run on GitHub Actions (artifacts on PR) while using **Jules only to create PRs**.
+本リポジトリは **PhaseA（pose-only）** の最小テスト用ハーネスです。  
+方針：**MP4はJulesで生成** → **GCSにアップ** → **署名URLをPR本文に記載**（Artifactsは使わない最軽量運用）。
 
-## Quick start (30 seconds)
+## Quick start
 
 ```bash
-# 1) Push the repo (or unzip & push)
-# 2) Create a PR using Jules (title is pre-set in the prompt)
-# 3) Wait for GitHub Actions to finish; download MP4 from Artifacts
-```
+# (A) v1 → flat 変換（例：yaw）
+python tests/scripts/pose_v1_to_flat.py --in tests/timelines/pose_timeline_yaw.json --out tests/flats/yaw.flat.json
 
-## Layout
-- `vendor/src/` – pinned runner + render core + timeline (V1: your stable M0_2)
-- `tests/assets_min/` – minimal atlas (front/left30/right30 × mouth6) + timelines
-- `tests/scripts/run_phaseA.py` – config adapter + execution + output normalization
-- `.github/workflows/phaseA-artifacts.yml` – builds on PR and uploads artifacts
-- `.jules/runbook.yaml` – PR creation only (no execution)
-- `configs/phaseA.base.json` – base config (already in runner schema; adapter supports legacy too)
-
-## Local run (optional)
-```bash
+# (B) 実行（既定は yaw.flat.json / 明示指定も可）
 python tests/scripts/run_phaseA.py
-python tests/scripts/verify_outputs.py
-```
-
-Outputs:
-- MP4: `tests/out/videos/phaseA_demo.mp4`
-- Logs: `tests/out/logs/run.log.json`, `tests/out/logs/summary.csv`
-
-## Notes
-- `opencv-python-headless`, `numpy`, `PyYAML` are required in CI.
-- `tests/out/` and `configs/phaseA.config.json` are ignored by git.
+# or
+python tests/scripts/run_phaseA.py --pose tests/flats/pitch.flat.json
