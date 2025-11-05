@@ -42,22 +42,16 @@ def main():
 
     crossfade_frames = int(cfg["render"]["crossfade_frames"])
 
-    mouth_json = os.path.join(assets_dir, cfg["inputs"]["mouth_timeline"])
-    pose_json = os.path.join(assets_dir, cfg["inputs"]["pose_timeline"])
-    expr_json = os.path.join(assets_dir, cfg["inputs"]["expression_timeline"])
-
-    mouth_tl = Timeline.load_json(mouth_json)
-    pose_tl = Timeline.load_json(pose_json)
-    expr_tl = Timeline.load_json(expr_json)
+    inputs = cfg.get("inputs", {})
+    mouth_tl = Timeline.load_json(os.path.join(assets_dir, inputs["mouth_timeline"])) if "mouth_timeline" in inputs else Timeline([])
+    pose_tl = Timeline.load_json(os.path.join(assets_dir, inputs["pose_timeline"])) if "pose_timeline" in inputs else Timeline([])
+    expr_tl = Timeline.load_json(os.path.join(assets_dir, inputs["expression_timeline"])) if "expression_timeline" in inputs else Timeline([])
 
     def merged_value(t_ms: int) -> Dict[str, Any]:
-        m = mouth_tl.value_at(t_ms)
-        p = pose_tl.value_at(t_ms)
-        e = expr_tl.value_at(t_ms)
         vals = {}
-        vals.update(m)
-        vals.update(p)
-        vals.update(e)
+        vals.update(mouth_tl.value_at(t_ms))
+        vals.update(pose_tl.value_at(t_ms))
+        vals.update(expr_tl.value_at(t_ms))
         return vals
 
     exp_dir = os.path.join(out_dir, exp_name)

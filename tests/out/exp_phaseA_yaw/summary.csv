@@ -1,0 +1,9 @@
+key,value
+exp_name,exp_phaseA_yaw
+duration_s,3
+elapsed_s,0.969
+fallback_frames,75
+first_fallback_ms,0
+views_front,17
+views_left30,0
+views_right30,58

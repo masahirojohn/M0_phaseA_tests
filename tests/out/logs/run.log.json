@@ -1,0 +1,17 @@
+{
+  "out_mp4": "/app/tests/out/exp_phaseA_yaw/demo.mp4",
+  "fps": 25,
+  "duration_s": 3,
+  "frames": 75,
+  "assets_dir": "/app/tests/assets_min",
+  "exp_name": "exp_phaseA_yaw",
+  "elapsed_s": 0.969,
+  "views": {
+    "front": 17,
+    "left30": 0,
+    "right30": 58
+  },
+  "fallback_frames": 75,
+  "first_fallback_ms": 0,
+  "total_frames": 75
+}

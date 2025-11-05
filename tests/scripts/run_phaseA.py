@@ -61,9 +61,7 @@ def to_runner_schema(cfg: dict, repo: Path) -> dict:
             "crossfade_frames": 4
         },
         "inputs": {
-            "mouth_timeline": "timelines/mouth_timeline.json",
-            "pose_timeline": "timelines/pose_timeline_yaw.flat.json",  # 後で上書き
-            "expression_timeline": "timelines/expression_timeline.json"
+            "pose_timeline": "timelines/pose_timeline_yaw.flat.json"
         },
         "atlas": {
             "atlas_json": "atlas.min.json" if "atlas.min.json" in atlas_path else atlas_path
@@ -106,6 +104,15 @@ def main():
         raise FileNotFoundError(f"[run_phaseA] pose timeline not found: {pose_path}")
     final_cfg["inputs"]["pose_timeline"] = str(pose_path)
 
+    # assets_dir を絶対パス化
+    final_cfg["io"]["assets_dir"] = str(repo / final_cfg["io"]["assets_dir"])
+
+    # 不要なタイムライン設定を削除
+    if "mouth_timeline" in final_cfg["inputs"]:
+        del final_cfg["inputs"]["mouth_timeline"]
+    if "expression_timeline" in final_cfg["inputs"]:
+        del final_cfg["inputs"]["expression_timeline"]
+
     # 出力先を固定（paths.yaml に従う）
     final_cfg["io"]["out_dir"] = str(out_root)
 
@@ -117,7 +124,10 @@ def main():
     runner = repo / "vendor" / "src" / "m0_runner.py"
     cmd = [sys.executable, str(runner), "--config", str(final_json)]
     try:
-        subprocess.run(cmd, check=True)
+        my_env = os.environ.copy()
+        vendor_path = str(repo / "vendor")
+        my_env["PYTHONPATH"] = f"{vendor_path}:{my_env.get('PYTHONPATH', '')}"
+        subprocess.run(cmd, check=True, env=my_env, cwd=repo)
     except Exception as e:
         (logs_dir / "error.log").write_text(str(e), encoding="utf-8")
         raise
