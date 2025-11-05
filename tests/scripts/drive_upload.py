@@ -3,11 +3,9 @@
 """
 drive_upload.py
 - サービスアカウントでGoogleドライブにファイルをアップロード
-- 共有フォルダのfolder_idの中に置く（フォルダは事前にSA宛てに共有しておく）
-- 任意で「リンクを知っている全員に閲覧可」に切替えて共有リンクを取得
-
+- 共有フォルダ(folder_id)に配置し、必要に応じて「リンクを知っている全員に閲覧可」にする
 使い方:
-  export GOOGLE_APPLICATION_CREDENTIALS=/path/to/sa.json
+  export GOOGLE_APPLICATION_CREDENTIALS=/tmp/drive_sa.json
   python tests/scripts/drive_upload.py \
     --file tests/out/videos/phaseA_demo.mp4 \
     --name phaseA_demo.mp4 \
@@ -16,6 +14,7 @@ drive_upload.py
 """
 
 import argparse
+import os
 from pathlib import Path
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
@@ -32,41 +31,25 @@ def main():
                     help="yesで'リンクを知っている全員'閲覧可にする")
     args = ap.parse_args()
 
-    creds = service_account.Credentials.from_service_account_file(
-        filename=Path().joinpath(
-            # GOOGLE_APPLICATION_CREDENTIALS が優先されるので未指定でもOK
-            # ただし google-auth は環境変数を自動参照しないので明示読込
-            # ※環境変数に設定している場合は下の行を差し替えても構いません
-            # 例: os.environ["GOOGLE_APPLICATION_CREDENTIALS"]
-        ),
-        scopes=SCOPES
-    )
-    # 上の読み方が分かりづらければ、環境変数から読む書き方に差し替え可：
-    # import os
-    # creds = service_account.Credentials.from_service_account_file(os.environ["GOOGLE_APPLICATION_CREDENTIALS"], scopes=SCOPES)
+    sa_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
+    if not sa_path or not Path(sa_path).exists():
+        raise RuntimeError("GOOGLE_APPLICATION_CREDENTIALS が未設定 or ファイルが存在しません。")
 
+    creds = service_account.Credentials.from_service_account_file(sa_path, scopes=SCOPES)
     service = build("drive", "v3", credentials=creds)
 
     media = MediaFileUpload(args.file, resumable=True)
     metadata = {"name": args.name, "parents": [args.folder]}
-    f = service.files().create(body=metadata, media_body=media, fields="id, webViewLink, webContentLink").execute()
+    f = service.files().create(body=metadata, media_body=media,
+                               fields="id, webViewLink, webContentLink").execute()
 
     file_id = f["id"]
-    web_view = f.get("webViewLink")     # Driveのプレビュー用リンク
-    web_dl   = f.get("webContentLink")  # 直接ダウンロードリンク（サイズや権限で不可な場合あり）
-
     if args.public == "yes":
-        service.permissions().create(
-            fileId=file_id,
-            body={"role":"reader", "type":"anyone"},
-        ).execute()
-        # 公開後にリンク再取得
-        f2 = service.files().get(fileId=file_id, fields="webViewLink, webContentLink").execute()
-        web_view = f2.get("webViewLink")
-        web_dl   = f2.get("webContentLink")
+        service.permissions().create(fileId=file_id, body={"role":"reader", "type":"anyone"}).execute()
+        f = service.files().get(fileId=file_id, fields="webViewLink, webContentLink").execute()
 
-    # 最後に使いやすいURLを標準出力
-    print(web_view or web_dl or f"https://drive.google.com/file/d/{file_id}/view")
+    # プレビュー用URL（最終出力）
+    print(f.get("webViewLink") or f.get("webContentLink") or f"https://drive.google.com/file/d/{file_id}/view")
 
 if __name__ == "__main__":
     main()
