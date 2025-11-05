@@ -104,6 +104,12 @@ def main():
         raise FileNotFoundError(f"[run_phaseA] pose timeline not found: {pose_path}")
     final_cfg["inputs"]["pose_timeline"] = str(pose_path)
 
+    # duration_s が "auto" ならポーズTLのmax t_msから計算
+    if final_cfg.get("video", {}).get("duration_s") == "auto":
+        pose_tl = json.loads(pose_path.read_text(encoding="utf-8"))
+        max_t_ms = max(item["t_ms"] for item in pose_tl) if pose_tl else 3000
+        final_cfg["video"]["duration_s"] = max_t_ms / 1000.0
+
     # assets_dir を絶対パス化
     final_cfg["io"]["assets_dir"] = str(repo / final_cfg["io"]["assets_dir"])
     if "atlas" in final_cfg and "atlas_json" in final_cfg["atlas"]:

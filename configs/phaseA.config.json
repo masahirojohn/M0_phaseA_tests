@@ -8,7 +8,7 @@
     "width": 640,
     "height": 640,
     "fps": 25,
-    "duration_s": 3
+    "duration_s": 29.96
   },
   "render": {
     "crossfade_frames": 4
