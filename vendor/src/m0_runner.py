@@ -48,17 +48,11 @@ def main():
     expr_tl = Timeline.load_json(os.path.join(assets_dir, inputs["expression_timeline"])) if "expression_timeline" in inputs else Timeline([])
 
     def merged_value(t_ms: int) -> Dict[str, Any]:
-    m = mouth_tl.value_at(t_ms)
-    p = pose_tl.value_at(t_ms)
-    e = expr_tl.value_at(t_ms)
-    vals = {}
-    vals.update(m)
-    vals.update(p)
-    vals.update(e)
-    # ★ ここを追加：mouthが無いと全Fallbackになるので安全策でclosedを補う
-    if "mouth" not in vals or not vals["mouth"]:
-        vals["mouth"] = "closed"
-    return vals
+        vals = {}
+        vals.update(mouth_tl.value_at(t_ms))
+        vals.update(pose_tl.value_at(t_ms))
+        vals.update(expr_tl.value_at(t_ms))
+        return vals
 
     exp_dir = os.path.join(out_dir, exp_name)
     os.makedirs(exp_dir, exist_ok=True)

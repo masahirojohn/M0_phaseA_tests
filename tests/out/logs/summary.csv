@@ -1,7 +1,7 @@
 key,value
 exp_name,exp_phaseA_yaw
 duration_s,3
-elapsed_s,1.511
+elapsed_s,1.518
 fallback_frames,0
 first_fallback_ms,None
 views_front,17
