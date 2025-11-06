@@ -4,7 +4,7 @@
 make_pr_body.py
 - summary.csv を軽く要約（1行目ヘッダをキーに辞書化）
 - サムネを列挙
-- 署名URLを差し込み、PR本文(Markdown)を標準出力へ
+- 公開URLを差し込み、PR本文(Markdown)を標準出力へ
 - 使い方:
     python tests/scripts/make_pr_body.py \
         --summary tests/out/logs/summary.csv \
@@ -37,7 +37,7 @@ def main():
     # --- Markdown ---
     print("## Results")
     print("")
-    print(f"- **Video (signed URL, ~48h):** [{args.video_url}]({args.video_url})")
+    print(f"- **Video (public URL):** [{args.video_url}]({args.video_url})")
     print("")
     if summary:
         print("### Metrics")
@@ -54,7 +54,7 @@ def main():
             # GitHubは相対パス画像をPRで表示しづらいので、ここはファイル名のみ列挙に留める
             print(f"- {t.name}")
         print("")
-    print("> Artifactsを使わず、外部ストレージの署名URLだけを掲載する最軽量モード。")
+    print("> Artifactsを使わず、外部ストレージの公開URLだけを掲載する最軽量モード。")
 
 if __name__ == "__main__":
     main()
