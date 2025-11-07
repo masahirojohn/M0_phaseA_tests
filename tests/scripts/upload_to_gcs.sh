@@ -21,7 +21,6 @@ if [ ! -f "$MP4_PATH" ]; then
 fi
 
 # 1) ローカルMP4の健全性チェック（小さすぎるファイルは弾く）
-#    Linux/macOS 両対応で stat を試す
 BYTES=$(stat -c%s "$MP4_PATH" 2>/dev/null || stat -f%z "$MP4_PATH" 2>/dev/null || echo 0)
 if [ "${BYTES:-0}" -lt 200000 ]; then
   echo "[ERROR] MP4 too small (${BYTES} bytes): $MP4_PATH" >&2
@@ -29,24 +28,13 @@ if [ "${BYTES:-0}" -lt 200000 ]; then
 fi
 echo "[INFO] Local MP4 size: ${BYTES} bytes"
 
-# 2) SAキーを一時ファイルに展開（終了時に削除）
-SA_FILE="$(mktemp)"
-trap 'rm -f "$SA_FILE"' EXIT
-printf "%s" "$GCP_SA_KEY_JSON" > "$SA_FILE"
-
-# 3) 認証
-gcloud auth activate-service-account --key-file="$SA_FILE" --project="$GCP_PROJECT_ID" 1>/dev/null
-
-# 4) 宛先（例：gs://bucket/runs/PR-123/20251107-120000/phaseA_demo.mp4）
+# 2) 宛先（例：gs://bucket/runs/PR-123/20251107-120000/phaseA_demo.mp4）
 BASENAME="$(basename "$MP4_PATH")"
 REMOTE_KEY="${GCS_PREFIX}/PR-${PR_NUMBER}/${RUN_ID}/${BASENAME}"
-DEST="gs://${GCS_BUCKET_NAME}/${REMOTE_KEY}"
 
-# 5) アップロード（上書きする。Content-Typeを明示、キャッシュ無効化）
-gsutil -h "Cache-Control:no-cache" \
-       -h "Content-Type:video/mp4" \
-       cp "$MP4_PATH" "$DEST" 1>/dev/null
+# 3) Pythonスクリプトでアップロード
+SCRIPT_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+PUBLIC_URL=$(python "$SCRIPT_DIR/upload_to_gcs.py" "$MP4_PATH" "$REMOTE_KEY")
 
-# 6) 公開URL（バケットが allUsers: objectViewer 前提）
-PUBLIC_URL="https://storage.googleapis.com/${GCS_BUCKET_NAME}/${REMOTE_KEY}"
+# 4) 結果を出力
 echo "$PUBLIC_URL"
