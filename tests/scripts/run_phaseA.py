@@ -2,12 +2,14 @@
 # -*- coding: utf-8 -*-
 
 """
-PhaseA runner (slim)
+PhaseA runner (with view metrics)
 - v1→flat 変換後の FLAT ポーズを消費して M0 を実行
-- 既定: tests/flats/yaw.flat.json
-- 例:
+- 実行後に FLAT ポーズから view をフレーム単位で再構成し、
+  frames.csv とジッター指標（切替率/ラン長中央値/配分）を run.log.json に追記
+
+既定:
     python tests/scripts/run_phaseA.py
-    python tests/scripts/run_phaseA.py --pose tests/flats/pitch.flat.json
+    python tests/scripts/run_phaseA.py --pose tests/flats/yaw.flat.json
 """
 
 import os
@@ -18,8 +20,12 @@ import argparse
 import subprocess
 from pathlib import Path
 import yaml
+from statistics import median
+from collections import Counter
 
-
+# ------------------------------
+# utils
+# ------------------------------
 def deep_merge(base, override):
     if not isinstance(base, dict) or not isinstance(override, dict):
         return override
@@ -28,14 +34,11 @@ def deep_merge(base, override):
         out[k] = deep_merge(out.get(k), v)
     return out
 
-
 def load_yaml(p: Path):
     return yaml.safe_load(p.read_text(encoding="utf-8")) if p.exists() else {}
 
-
 def ensure_dir(p: Path):
     p.mkdir(parents=True, exist_ok=True)
-
 
 def to_runner_schema(cfg: dict, repo: Path) -> dict:
     """旧設定→runner用設定への最小変換（存在すればそのまま返す）"""
@@ -68,7 +71,122 @@ def to_runner_schema(cfg: dict, repo: Path) -> dict:
         }
     }
 
+# ------------------------------
+# view metrics (frames.csv + metrics)
+# ------------------------------
+def _runs(seq):
+    if not seq:
+        return []
+    out = []
+    r = 1
+    for a, b in zip(seq, seq[1:]):
+        if a == b:
+            r += 1
+        else:
+            out.append(r)
+            r = 1
+    out.append(r)
+    return out
 
+def _metrics_from_seq(seq):
+    if len(seq) <= 1:
+        switch_count = 0
+        compare_den = 1
+    else:
+        switch_count = sum(1 for a, b in zip(seq, seq[1:]) if a != b)
+        compare_den = len(seq) - 1
+    switch_rate = (switch_count / compare_den) if compare_den else 0.0
+    runs = _runs(seq)
+    med_run = int(median(runs)) if runs else 0
+    cnt = Counter(seq)
+    total = sum(cnt.values()) or 1
+    breakdown = {k: {"frames": v, "ratio": v / total} for k, v in cnt.items()}
+    return {
+        "frames_total": len(seq),
+        "switch_count": switch_count,
+        "switch_rate": switch_rate,           # 0.0–1.0
+        "runlen_median_frames": med_run,
+        "breakdown": breakdown,
+    }
+
+def _write_frames_csv(rows, path: Path):
+    import csv
+    ensure_dir(path.parent)
+    with path.open("w", newline="", encoding="utf-8") as f:
+        w = csv.writer(f)
+        w.writerow(["frame", "view"])
+        w.writerows(rows)
+
+def _bucket_from_yaw(yaw_deg: float, thr_front: float = 16.0) -> str:
+    # front: [-thr, +thr] / left30: < -thr / right30: > +thr
+    if -thr_front <= yaw_deg <= +thr_front:
+        return "front"
+    return "left30" if yaw_deg < -thr_front else "right30"
+
+def _derive_frames_from_flat(flat_path: Path, thr_front: float, fps_hint: int | None = None):
+    """
+    FLAT ポーズ（[{t_ms, yaw_deg, ...}, ...]）から frame→view を再構成
+    - FLAT が 1frame=1要素（25fps相当）で並んでいる前提
+    - fps_hint はメトリクスの付加情報としてのみ使用
+    """
+    data = json.loads(flat_path.read_text(encoding="utf-8"))
+    rows = []
+    seq = []
+    for i, item in enumerate(data):
+        yaw = float(item.get("yaw_deg", item.get("yaw", 0.0)))
+        v = _bucket_from_yaw(yaw, thr_front=thr_front)
+        rows.append((i, v))
+        seq.append(v)
+    metrics = _metrics_from_seq(seq)
+    # fps はヒントとして保持（無指定なら 25）
+    metrics["fps"] = int(fps_hint or 25)
+    metrics["source"] = "derived_from_pose_flat"
+    return rows, metrics
+
+def _maybe_load_vendor_frames(exp_dir: Path):
+    """
+    ベンダーが frames.csv を出した場合に利用する（なければ None を返す）
+    期待形式: frame,view
+    """
+    p = exp_dir / "frames.csv"
+    if not p.exists():
+        return None
+    import csv
+    seq = []
+    rows = []
+    with p.open(newline="", encoding="utf-8") as f:
+        r = csv.DictReader(f)
+        if "frame" not in r.fieldnames or "view" not in r.fieldnames:
+            return None
+        for row in r:
+            try:
+                fi = int(row["frame"])
+            except Exception:
+                continue
+            v = row.get("view") or "None"
+            rows.append((fi, v))
+            seq.append(v)
+    if not rows:
+        return None
+    metrics = _metrics_from_seq(seq)
+    metrics["source"] = "vendor_frames_csv"
+    return rows, metrics
+
+def _update_run_log(runlog_path: Path, view_metrics: dict):
+    data = {}
+    if runlog_path.exists():
+        try:
+            data = json.loads(runlog_path.read_text(encoding="utf-8"))
+        except Exception:
+            data = {}
+    data.setdefault("metrics", {})
+    data["metrics"]["view"] = view_metrics
+    ensure_dir(runlog_path.parent)
+    runlog_path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+
+# ------------------------------
+# main
+# ------------------------------
 def main():
     repo = Path(__file__).resolve().parents[2]  # <repo_root>
     cfg_dir = repo / "configs"
@@ -81,13 +199,10 @@ def main():
 
     # paths.yaml 読み込み（現行値: assets_dir, inputs_dir, logs_dir, out_root, videos_dir）
     paths = load_yaml(cfg_dir / "paths.yaml")
-    # 必須ディレクトリを確実に作成
     videos_dir = repo / paths.get("videos_dir", "tests/out/videos")
     logs_dir   = repo / paths.get("logs_dir",   "tests/out/logs")
     out_root   = repo / paths.get("out_root",   "tests/out")
-    ensure_dir(videos_dir)
-    ensure_dir(logs_dir)
-    ensure_dir(out_root)
+    ensure_dir(videos_dir); ensure_dir(logs_dir); ensure_dir(out_root)
 
     # base & override を読み込み → runner用スキーマに正規化
     base_cfg_path = cfg_dir / "phaseA.base.json"
@@ -107,7 +222,7 @@ def main():
     # duration_s が "auto" ならポーズTLのmax t_msから計算
     if final_cfg.get("video", {}).get("duration_s") == "auto":
         pose_tl = json.loads(pose_path.read_text(encoding="utf-8"))
-        max_t_ms = max(item["t_ms"] for item in pose_tl) if pose_tl else 3000
+        max_t_ms = max(item.get("t_ms", 0) for item in pose_tl) if pose_tl else 3000
         final_cfg["video"]["duration_s"] = max_t_ms / 1000.0
 
     # assets_dir を絶対パス化
@@ -128,7 +243,9 @@ def main():
     final_json = cfg_dir / "phaseA.config.json"
     final_json.write_text(json.dumps(final_cfg, ensure_ascii=False, indent=2), encoding="utf-8")
 
-    # ベンダーRunnerを呼び出し
+    # ------------------------------
+    # 実行
+    # ------------------------------
     runner = repo / "vendor" / "src" / "m0_runner.py"
     cmd = [sys.executable, str(runner), "--config", str(final_json)]
     try:
@@ -146,13 +263,37 @@ def main():
     dst_mp4 = videos_dir / "phaseA_demo.mp4"
     if src_mp4.exists():
         shutil.copy2(src_mp4, dst_mp4)
-    for name in ["run.log.json", "summary.csv"]:
+    for name in ["run.log.json", "summary.csv", "frames.csv"]:
         p = exp_dir / name
         if p.exists():
             shutil.copy2(p, logs_dir / name)
 
-    print(f"[OK] phaseA completed. MP4: {dst_mp4}")
+    # ------------------------------
+    # view frames とメトリクス生成
+    # ------------------------------
+    # 閾値を override から拾う（無ければ 16.0）
+    thr_front = float(override.get("metrics", {}).get("thr_front", 16.0))
+    
+    # 1) ベンダーが frames.csv を吐いていればそれを優先
+    vendor_frames = _maybe_load_vendor_frames(exp_dir)
+    if vendor_frames is not None:
+        rows, metrics = vendor_frames
+    else:
+        # 2) 無ければ FLAT ポーズから派生
+        thr_front = 16.0  # 閾値（必要なら override から拾う設計に拡張可）
+        fps_hint = final_cfg.get("video", {}).get("fps", 25)
+        rows, metrics = _derive_frames_from_flat(pose_path, thr_front=thr_front, fps_hint=fps_hint)
 
+    frames_csv = logs_dir / "frames.csv"
+    _write_frames_csv(rows, frames_csv)
+
+    # run.log.json を更新（metrics.view を追記）
+    runlog_path = logs_dir / "run.log.json"
+    _update_run_log(runlog_path, metrics)
+
+    print(f"[OK] phaseA completed. MP4: {dst_mp4}")
+    print(f"[OK] frames.csv: {frames_csv}")
+    print(f"[OK] view metrics -> {runlog_path} (metrics.view)")
 
 if __name__ == "__main__":
     main()
