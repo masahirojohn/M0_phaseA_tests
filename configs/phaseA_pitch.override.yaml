@@ -14,7 +14,7 @@ video:
 
 metrics:
   value_key: pitch
-  thr_front: 9.0
+  thr_front: 8.3
   zero_label: front
   neg_label: down
   pos_label: up
