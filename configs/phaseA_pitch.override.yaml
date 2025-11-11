@@ -1,0 +1,25 @@
+# PhaseA Pitch テスト用 Override
+# - 上下向き（pitch）でビュー切替ロジックとメトリクスを評価する設定
+# - yaw版と同様に、閾値やラベルはここで調整可能
+
+io:
+  exp_name: phaseA_pitch_demo     # 出力フォルダ名（tests/out/<exp_name>/）
+
+video:
+  # yawと同等の条件を維持（必要なら変更可）
+  width: 640
+  height: 640
+  fps: 25
+  duration_s: auto                # pitch.flat.json の最終 t_ms から自動算出
+
+metrics:
+  value_key: pitch
+  thr_front: 9.0
+  zero_label: front
+  neg_label: down
+  pos_label: up
+  map_deg: 30.0
+  view_alias:
+    left30: down15   # 左=neg側 → 下向きディレクトリに割当
+    right30: up15    # 右=pos側 → 上向きディレクトリに割当
+    front: front
