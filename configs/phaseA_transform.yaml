@@ -1,0 +1,18 @@
+transform:
+  yaw:
+    smooth_window_frames: 3
+    hysteresis_deg: 0.3
+    clamp_deg: 45.0
+    baseline_offset_deg: 0.0
+
+  pitch:
+    smooth_window_frames: 3
+    hysteresis_deg: 0.3
+    clamp_deg: 20.0
+    baseline_offset_deg: 0.0
+
+  roll:
+    smooth_window_frames: 3
+    hysteresis_deg: 0.3
+    clamp_deg: 15.0
+    baseline_offset_deg: 0.0
