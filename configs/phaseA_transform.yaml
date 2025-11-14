@@ -1,3 +1,16 @@
+# configs/phaseA_transform.yaml
+enabled: false
+roll_coef: 1.0
+yaw_coef: 0.0
+pitch_coef: 0.0
+
+
+
+
+
+
+
+
 transform:
   yaw:
     smooth_window_frames: 3
