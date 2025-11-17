@@ -98,7 +98,7 @@ def _normalize_mouth(mouth: str) -> str:
 
 
 # -----------------------------
-# atlas 読み込み（★ここが今回の修正ポイント）
+# atlas 読み込み（★expressionメタも素通し）
 # -----------------------------
 def load_atlas_index(atlas_json_path: str) -> Dict[str, Any]:
     """
@@ -106,6 +106,7 @@ def load_atlas_index(atlas_json_path: str) -> Dict[str, Any]:
 
     - トップレベルに front/left30/right30/... がある旧形式もサポート
     - data["views"][view][mouth] で必ず参照できるようにする
+    - expression_labels / expression_default などはそのまま返す
     """
     with open(atlas_json_path, "r", encoding="utf-8") as f:
         data = json.load(f)
@@ -114,7 +115,7 @@ def load_atlas_index(atlas_json_path: str) -> Dict[str, Any]:
     if not isinstance(views, dict):
         views = {}
         for key, value in data.items():
-            # front / left30 / right30 / up15 / down15 ... のようなビュー辞書を拾う
+            # front / left30 / right30 ... のようなビュー辞書を拾う
             if isinstance(value, dict) and "closed" in value:
                 # mouthキーは小文字に統一
                 views[key] = {str(m).lower(): path for m, path in value.items()}
@@ -136,9 +137,11 @@ def load_atlas_index(atlas_json_path: str) -> Dict[str, Any]:
 def _make_pose_transform(transform_cfg: Dict[str, Any] | None):
     """
     transform_cfg に従って BGRA 画像へ yaw/pitch/roll 変形を適用する関数を返す。
-    PhaseA では roll のみ軽く回転する最小実装。
+    - dict の場合: enabled / roll_coef / yaw_coef / pitch_coef を解釈
+    - dict 以外(str など)や None の場合: 変形なし(noop)として扱う
     """
-    if not transform_cfg:
+    # dict でなければ、変形なし
+    if not transform_cfg or not isinstance(transform_cfg, dict):
         def _noop(img, yaw_deg=0.0, pitch_deg=0.0, roll_deg=0.0):
             return img
         return _noop
@@ -175,6 +178,73 @@ def _make_pose_transform(transform_cfg: Dict[str, Any] | None):
 
 
 # -----------------------------
+# 口スプライト解決ヘルパ
+# -----------------------------
+def _resolve_base_sprite_path(
+    atlas_idx: Dict[str, Any],
+    view: str,
+    mouth: str,
+) -> tuple[str | None, bool]:
+    """
+    view / mouth から「normal表情」を前提にしたベースPNGパスを解決する。
+    - atlas_idx["views"][view][mouth] を参照
+    - 無ければ fallback.view / fallback.mouth にフォールバック
+    戻り値: (path_rel or None, used_fallback)
+    """
+    views = atlas_idx.get("views", {}) or {}
+
+    # まずはそのままの view/mouth
+    path_rel = views.get(view, {}).get(mouth)
+    used_fallback = False
+
+    if not path_rel:
+        fb_cfg = atlas_idx.get("fallback", {}) or {}
+        fb_view = fb_cfg.get("view", "front")
+        fb_mouth = _normalize_mouth(fb_cfg.get("mouth", "closed"))
+        path_rel = views.get(fb_view, {}).get(fb_mouth)
+        used_fallback = True
+
+    return path_rel, used_fallback
+
+
+def _derive_expression_path(
+    atlas_idx: Dict[str, Any],
+    view: str,
+    mouth: str,
+    expression: str | None,
+    base_path_rel: str,
+) -> str:
+    """
+    expression ラベルとベースPNGパスから、
+    assets_dir/<expr>_<view>/<mouth_xxx.png> を導出する。
+
+    - expression が None の場合や "normal" の場合は base_path_rel をそのまま返す
+    - expression_labels に含まれないラベルなら無視して base_path_rel を返す
+    """
+    expr_default = str(atlas_idx.get("expression_default", "normal")).lower()
+    expr = (expression or expr_default).lower()
+
+    if expr in ("normal", "", None):
+        return base_path_rel
+
+    labels = [
+        str(e).lower()
+        for e in atlas_idx.get("expression_labels", [])
+    ]
+    if labels and expr not in labels:
+        # 未知のラベル → normal と同じ扱い
+        return base_path_rel
+
+    # base_path_rel からファイル名だけ拝借（mouth_a.png など）
+    base_name = os.path.basename(base_path_rel)
+    # ディレクトリは <expr>_<view> に固定（事前合意済み）
+    expr_dir = f"{expr}_{view}"
+    expr_path_rel = os.path.join(expr_dir, base_name)
+    # Windows 対策で / に揃えておく
+    return expr_path_rel.replace("\\", "/")
+
+
+# -----------------------------
 # メインレンダラー
 # -----------------------------
 def render_video(
@@ -190,7 +260,13 @@ def render_video(
     transform_cfg: Dict[str, Any] | None = None,
 ) -> Dict[str, Any]:
     """
-    旧版 BGRA レンダラー + pose_transform フック付き
+    BGRA レンダラー + pose_transform フック + expression 対応。
+
+    - pose_timeline / mouth_timeline / expression_timeline を統合した
+      timeline_value_fn(t_ms) の戻り dict から mouth/yaw/pitch/roll/expression を読む。
+    - expression に応じて
+        assets_dir/<expression>_<view>/mouth_*.png
+      を優先的に参照し、存在しなければ normal 表情にフォールバック。
     """
     os.makedirs(os.path.dirname(out_mp4) or ".", exist_ok=True)
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -220,10 +296,12 @@ def render_video(
     for i in range(total_frames):
         t_ms = int(1000 * i / fps)
         vals: Dict[str, Any] = timeline_value_fn(t_ms)
+
         mouth = _normalize_mouth(vals.get("mouth", "closed"))
         yaw = float(vals.get("yaw", vals.get("yaw_deg", 0.0)))
         pitch = float(vals.get("pitch", vals.get("pitch_deg", 0.0)))
         roll = float(vals.get("roll", vals.get("roll_deg", 0.0)))
+        expression = vals.get("expression")  # None の場合は normal 扱い
 
         frame = _solid_bg(width, height)
 
@@ -236,20 +314,40 @@ def render_video(
             views = atlas_idx.get("views", {})
             views_count[view] = views_count.get(view, 0) + 1
 
-            path_rel = views.get(view, {}).get(mouth)
-            if not path_rel:
-                # フォールバック
-                used_fallback = True
-                fb_view = atlas_idx.get("fallback", {}).get("view", "front")
-                fb_mouth = _normalize_mouth(
-                    atlas_idx.get("fallback", {}).get("mouth", "closed")
-                )
-                path_rel = views.get(fb_view, {}).get(fb_mouth)
+            # 1. normal 表情前提のベースPNGパスを解決
+            base_path_rel, used_fallback_base = _resolve_base_sprite_path(atlas_idx, view, mouth)
+            used_fallback = used_fallback or used_fallback_base
 
-            if path_rel:
+            if base_path_rel:
+                # 2. expression 用にパスを上書き
+                expr_path_rel = _derive_expression_path(
+                    atlas_idx=atlas_idx,
+                    view=view,
+                    mouth=mouth,
+                    expression=expression,
+                    base_path_rel=base_path_rel,
+                )
+
+                # 実際の読み込み：まず expression 専用 → 無ければ normal にフォールバック
+                asset_path = None
+                src = None
+
+                # 2-1. expression 専用のパスを試す
                 try:
-                    asset_path = os.path.join(assets_dir, path_rel)
+                    asset_path = os.path.join(assets_dir, expr_path_rel)
                     src = _load_rgba(asset_path)
+                except FileNotFoundError:
+                    # expression 用PNGが無い → normal 表情にフォールバック
+                    if expr_path_rel != base_path_rel:
+                        try:
+                            asset_path = os.path.join(assets_dir, base_path_rel)
+                            src = _load_rgba(asset_path)
+                            used_fallback = True  # 「表情」の意味ではフォールバック
+                        except FileNotFoundError:
+                            src = None
+
+                if src is not None:
+                    # リサイズ
                     tgt_h = max(1, int(height * target_h_ratio))
                     scale = tgt_h / src.shape[0]
                     tgt_w = max(1, int(src.shape[1] * scale))
@@ -263,7 +361,8 @@ def render_video(
                     cx = width // 2
                     cy = int(height * 0.58)
                     _alpha_paste(frame, src_rs, cx, cy)
-                except FileNotFoundError:
+                else:
+                    # baseもexpressionも読めなかった場合
                     used_fallback = True
 
         if used_fallback:
@@ -287,10 +386,16 @@ def render_video(
 
     vw.release()
 
+    # transform 設定の有効・無効（dict 以外が来ても安全に扱う）
+    if isinstance(transform_cfg, dict):
+        transform_enabled = bool(transform_cfg.get("enabled", False))
+    else:
+        transform_enabled = False
+
     return {
         "views": views_count,
         "fallback_frames": int(fallback_frames),
         "first_fallback_ms": int(first_fallback_ms) if first_fallback_ms is not None else None,
         "total_frames": int(total_frames),
-        "transform": {"enabled": bool(transform_cfg and transform_cfg.get("enabled", False))},
+        "transform": {"enabled": transform_enabled},
     }
