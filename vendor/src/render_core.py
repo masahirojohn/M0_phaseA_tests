@@ -258,6 +258,7 @@ def render_video(
     assets_dir: str | None = None,
     atlas_json_rel: str | None = None,
     transform_cfg: Dict[str, Any] | None = None,
+    per_frame_hook=None,
 ) -> Dict[str, Any]:
     """
     BGRA レンダラー + pose_transform フック + expression 対応。
@@ -267,6 +268,8 @@ def render_video(
     - expression に応じて
         assets_dir/<expression>_<view>/mouth_*.png
       を優先的に参照し、存在しなければ normal 表情にフォールバック。
+    - per_frame_hook が指定されていれば、各フレームの BGRA を渡して
+      加工後の BGRA を受け取り、それを出力に使う（M3.5 合成など）。
     """
     os.makedirs(os.path.dirname(out_mp4) or ".", exist_ok=True)
     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -369,6 +372,10 @@ def render_video(
             fallback_frames += 1
             if first_fallback_ms is None:
                 first_fallback_ms = t_ms
+
+        # ★ ここで per_frame_hook に BGRA フレームを渡す（M3.5 合成など）★
+        if per_frame_hook is not None:
+            frame = per_frame_hook(frame, t_ms, i)
 
         # クロスフェード（旧版互換）
         if crossfade_frames > 0 and prev_frame is not None and i % (fps // 2 or 1) == 0:
