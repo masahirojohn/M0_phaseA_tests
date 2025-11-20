@@ -1,0 +1,34 @@
+# configs/phaseC_A.bench.yaml
+# PhaseC-A: M0 ベンチマーク用設定
+
+io:
+  assets_dir: "tests/assets_min"
+  out_dir: "tests/out"
+  exp_name: "phaseC_A_bench_long"
+
+video:
+  width: 640
+  height: 640
+  fps: 25
+  duration_s: 34.2  # phaseB long と同等尺
+
+render:
+  crossfade_frames: 4
+
+inputs:
+  mouth_timeline: "timelines/mouth_phaseB_long.json"
+  pose_timeline: "../flats/yaw.flat.json"
+  expression_timeline: "timelines/expression_phaseB_long.json"
+
+atlas:
+  atlas_json: "atlas.min.json"
+
+transform:
+  enabled: true
+  roll_coef: 0.8
+  yaw_coef: 0.15
+  pitch_coef: 0.1
+
+benchmark:
+  label: "phaseC_A_long"
+  record_frame_level: false
