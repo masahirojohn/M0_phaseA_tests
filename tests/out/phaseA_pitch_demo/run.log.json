@@ -1,0 +1,34 @@
+{
+  "out_mp4": "/workspaces/M0_phaseA_tests/tests/out/phaseA_pitch_demo/demo.mp4",
+  "fps": 25,
+  "duration_s": 29,
+  "frames": 725,
+  "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+  "assets_dir_effective": "/workspaces/M0_phaseA_tests/tests/out/phaseA_pitch_demo/tmp_assets",
+  "exp_name": "phaseA_pitch_demo",
+  "elapsed_s": 14.768,
+  "axis": "pitch",
+  "thr_front_deg": 8.3,
+  "map_deg": 30.0,
+  "labels": {
+    "zero": "front",
+    "neg": "down",
+    "pos": "up"
+  },
+  "view_alias": {
+    "left30": "down15",
+    "right30": "up15",
+    "front": "front"
+  },
+  "views": {
+    "front": 181,
+    "right30": 272,
+    "left30": 272
+  },
+  "fallback_frames": 0,
+  "first_fallback_ms": null,
+  "total_frames": 725,
+  "transform": {
+    "enabled": true
+  }
+}

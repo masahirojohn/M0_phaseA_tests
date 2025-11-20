@@ -1,17 +1,30 @@
 {
-  "out_mp4": "/app/tests/out/exp_phaseA_yaw/demo.mp4",
+  "out_mp4": "/workspaces/M0_phaseA_tests/tests/out/exp_phaseA_yaw/demo.mp4",
   "fps": 25,
   "duration_s": 29,
   "frames": 725,
-  "assets_dir": "/app/tests/assets_min",
+  "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+  "assets_dir_effective": "/workspaces/M0_phaseA_tests/tests/assets_min",
   "exp_name": "exp_phaseA_yaw",
-  "elapsed_s": 14.28,
+  "elapsed_s": 15.931,
+  "axis": "yaw",
+  "thr_front_deg": 16.0,
+  "map_deg": 30.0,
+  "labels": {
+    "zero": "front",
+    "neg": "left30",
+    "pos": "right30"
+  },
+  "view_alias": {},
   "views": {
-    "front": 114,
-    "left30": 301,
-    "right30": 310
+    "front": 153,
+    "right30": 288,
+    "left30": 284
   },
   "fallback_frames": 0,
   "first_fallback_ms": null,
-  "total_frames": 725
+  "total_frames": 725,
+  "transform": {
+    "enabled": false
+  }
 }

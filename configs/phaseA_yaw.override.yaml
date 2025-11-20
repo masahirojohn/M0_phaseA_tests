@@ -1,2 +1,7 @@
 video:
   fps: 25
+
+# 既存内容の下でOK
+metrics:
+  thr_front: 16.0   # frontの閾値（±度）
+

@@ -1,9 +1,9 @@
 key,value
 exp_name,exp_phaseA_yaw
 duration_s,29
-elapsed_s,14.28
+elapsed_s,15.931
 fallback_frames,0
 first_fallback_ms,None
-views_front,114
-views_left30,301
-views_right30,310
+views_front,153
+views_right30,288
+views_left30,284

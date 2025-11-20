@@ -1,0 +1,30 @@
+{
+  "out_mp4": "/workspaces/M0_phaseA_tests/tests/out/phaseB_demo_long/demo.mp4",
+  "fps": 25,
+  "duration_s": 34,
+  "frames": 850,
+  "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+  "assets_dir_effective": "/workspaces/M0_phaseA_tests/tests/assets_min",
+  "exp_name": "phaseB_demo_long",
+  "elapsed_s": 20.97,
+  "axis": "yaw",
+  "thr_front_deg": 16.0,
+  "map_deg": 30.0,
+  "labels": {
+    "zero": "front",
+    "neg": "left30",
+    "pos": "right30"
+  },
+  "view_alias": {},
+  "views": {
+    "front": 274,
+    "right30": 288,
+    "left30": 288
+  },
+  "fallback_frames": 447,
+  "first_fallback_ms": 2000,
+  "total_frames": 850,
+  "transform": {
+    "enabled": true
+  }
+}

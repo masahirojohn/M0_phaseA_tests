@@ -1,0 +1,6 @@
+# configs/phaseA_transform.yaml
+transform:
+  enabled: false       # PhaseA では変形OFFのまま運用
+  roll_coef: 1.0       # 将来 simple 回転を使いたくなった時用
+  yaw_coef: 0.0
+  pitch_coef: 0.0

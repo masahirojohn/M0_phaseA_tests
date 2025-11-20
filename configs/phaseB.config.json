@@ -1,0 +1,30 @@
+{
+  "io": {
+    "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+    "out_dir": "/workspaces/M0_phaseA_tests/tests/out",
+    "exp_name": "phaseB_demo_long"
+  },
+  "video": {
+    "width": 640,
+    "height": 640,
+    "fps": 25,
+    "duration_s": 34.2
+  },
+  "render": {
+    "crossfade_frames": 4
+  },
+  "inputs": {
+    "mouth_timeline": "/workspaces/M0_phaseA_tests/tests/assets_min/timelines/mouth_phaseB_long.json",
+    "pose_timeline": "/workspaces/M0_phaseA_tests/tests/flats/yaw.flat.json",
+    "expression_timeline": "/workspaces/M0_phaseA_tests/tests/assets_min/timelines/expression_phaseB_long.json"
+  },
+  "atlas": {
+    "atlas_json": "/workspaces/M0_phaseA_tests/tests/assets_min/atlas.min.json"
+  },
+  "transform": {
+    "enabled": true,
+    "roll_coef": 0.8,
+    "yaw_coef": 0.15,
+    "pitch_coef": 0.1
+  }
+}

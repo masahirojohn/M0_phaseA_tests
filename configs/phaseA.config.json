@@ -1,8 +1,8 @@
 {
   "io": {
-    "assets_dir": "/app/tests/assets_min",
-    "out_dir": "/app/tests/out",
-    "exp_name": "exp_phaseA_yaw"
+    "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+    "out_dir": "/workspaces/M0_phaseA_tests/tests/out",
+    "exp_name": "phaseA_roll_demo"
   },
   "video": {
     "width": 640,
@@ -14,9 +14,23 @@
     "crossfade_frames": 4
   },
   "inputs": {
-    "pose_timeline": "/app/tests/flats/yaw.flat.json"
+    "pose_timeline": "/workspaces/M0_phaseA_tests/tests/flats/roll.flat.json"
   },
   "atlas": {
-    "atlas_json": "/app/tests/assets_min/atlas.min.json"
+    "atlas_json": "/workspaces/M0_phaseA_tests/tests/assets_min/atlas.min.json"
+  },
+  "metrics": {
+    "value_key": "roll",
+    "thr_front": 8.0,
+    "zero_label": "front",
+    "neg_label": "tilt_left",
+    "pos_label": "tilt_right",
+    "map_deg": 0.0
+  },
+  "transform": {
+    "enabled": true,
+    "roll_coef": 0.8,
+    "yaw_coef": 0.15,
+    "pitch_coef": 0.1
   }
 }

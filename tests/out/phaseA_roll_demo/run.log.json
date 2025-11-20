@@ -1,0 +1,32 @@
+{
+  "out_mp4": "/workspaces/M0_phaseA_tests/tests/out/phaseA_roll_demo/demo.mp4",
+  "fps": 25,
+  "duration_s": 29,
+  "frames": 725,
+  "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+  "assets_dir_effective": "/workspaces/M0_phaseA_tests/tests/out/phaseA_roll_demo/tmp_assets",
+  "exp_name": "phaseA_roll_demo",
+  "elapsed_s": 16.808,
+  "axis": "roll",
+  "thr_front_deg": 8.0,
+  "map_deg": 0.0,
+  "labels": {
+    "zero": "front",
+    "neg": "tilt_left",
+    "pos": "tilt_right"
+  },
+  "view_alias": {
+    "front": "front",
+    "left30": "left30",
+    "right30": "right30"
+  },
+  "views": {
+    "front": 725
+  },
+  "fallback_frames": 0,
+  "first_fallback_ms": null,
+  "total_frames": 725,
+  "transform": {
+    "enabled": true
+  }
+}

@@ -1,0 +1,16 @@
+# configs/phaseT_transform.override.yaml
+transform:
+  enabled: true
+
+  # PhaseT 初期段階の軽量変形（回転ベース）
+  roll_coef: 0.8
+  yaw_coef: 0.15
+  pitch_coef: 0.10
+
+  # 将来の shear 実装に備えた予約パラメータ（現行 render_core では無視されます）
+  # mode: "linear"
+  # shear:
+  #   yaw_x: 0.0
+  #   yaw_y: 0.0
+  #   pitch_x: 0.0
+  #   pitch_y: 0.0

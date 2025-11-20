@@ -1,0 +1,34 @@
+{
+  "axis": "roll",
+  "frames": 750,
+  "thr_deg": 8.0,
+  "ratio": {
+    "neg": 0.32,
+    "front": 0.36,
+    "pos": 0.32
+  },
+  "counts": {
+    "neg": 240,
+    "front": 270,
+    "pos": 240
+  },
+  "switch_rate": 0.01602136181575434,
+  "switch_count": 12,
+  "runlen_median_frames": 45,
+  "abs_deg_percentiles": {
+    "50": 10.54,
+    "75": 13.876,
+    "90": 14.8,
+    "95": 14.942,
+    "99": 14.999
+  },
+  "mean_deg": 0.0,
+  "std_deg": 10.606617005624367,
+  "p90_speed_deg_per_frame": 0.3719999999999999,
+  "recommend": {
+    "smooth_window_frames": 3,
+    "hysteresis_deg": 0.3,
+    "clamp_deg": 15.0,
+    "baseline_offset_deg": 0.0
+  }
+}

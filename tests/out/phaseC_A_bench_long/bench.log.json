@@ -1,0 +1,26 @@
+{
+  "label": "phaseC_A_long",
+  "config_path": "/workspaces/M0_phaseA_tests/configs/phaseC_A.bench.yaml",
+  "out_mp4": "/workspaces/M0_phaseA_tests/tests/out/phaseC_A_bench_long/bench.mp4",
+  "assets_dir": "/workspaces/M0_phaseA_tests/tests/assets_min",
+  "width": 640,
+  "height": 640,
+  "fps": 25,
+  "duration_s": 34.2,
+  "frames_expected": 855,
+  "elapsed_s": 21.86216445599996,
+  "elapsed_ms": 21862.16445599996,
+  "avg_ms_per_frame": 25.569782989473637,
+  "fps_effective": 39.10866198636383,
+  "views": {
+    "front": 279,
+    "right30": 288,
+    "left30": 288
+  },
+  "fallback_frames": 447,
+  "first_fallback_ms": 2000,
+  "total_frames": 855,
+  "transform": {
+    "enabled": true
+  }
+}

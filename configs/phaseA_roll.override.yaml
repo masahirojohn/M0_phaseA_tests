@@ -1,0 +1,21 @@
+io:
+  exp_name: phaseA_roll_demo
+
+video:
+  width: 640
+  height: 640
+  fps: 25
+  duration_s: auto
+
+metrics:
+  value_key: roll         # ★ roll で評価
+  thr_front: 8.0          # 例：±8°（後で微調整）
+  zero_label: front
+  neg_label: tilt_left
+  pos_label: tilt_right
+
+  # ★ レンダリングは変えない（擬似yawを発生させない）
+  map_deg: 0.0            # ← 非frontでも 0° に固定＝見た目は front のまま
+
+  # ★ エイリアス不要（見た目変えない）
+  # view_alias を未指定 or 空のままでOK

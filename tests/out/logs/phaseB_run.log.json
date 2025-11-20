@@ -1,0 +1,64 @@
+{
+  "metrics": {
+    "mouth": {
+      "frames_total": 30,
+      "switch_count": 26,
+      "switch_rate": 0.896551724137931,
+      "runlen_median_frames": 1,
+      "breakdown": {
+        "close": {
+          "frames": 7,
+          "ratio": 0.23333333333333334
+        },
+        "a": {
+          "frames": 6,
+          "ratio": 0.2
+        },
+        "i": {
+          "frames": 5,
+          "ratio": 0.16666666666666666
+        },
+        "u": {
+          "frames": 5,
+          "ratio": 0.16666666666666666
+        },
+        "e": {
+          "frames": 3,
+          "ratio": 0.1
+        },
+        "o": {
+          "frames": 4,
+          "ratio": 0.13333333333333333
+        }
+      }
+    },
+    "expression": {
+      "frames_total": 24,
+      "switch_count": 23,
+      "switch_rate": 1.0,
+      "runlen_median_frames": 1,
+      "breakdown": {
+        "normal": {
+          "frames": 4,
+          "ratio": 0.16666666666666666
+        },
+        "blink": {
+          "frames": 8,
+          "ratio": 0.3333333333333333
+        },
+        "smile": {
+          "frames": 4,
+          "ratio": 0.16666666666666666
+        },
+        "angry": {
+          "frames": 4,
+          "ratio": 0.16666666666666666
+        },
+        "sad": {
+          "frames": 4,
+          "ratio": 0.16666666666666666
+        }
+      }
+    }
+  }
+}
